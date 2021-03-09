@@ -1,32 +1,52 @@
 import socket
-from time import sleep
+from validator import port_validation, ip_validation
 
-SERVER_IP = "127.0.0.1"
-PORT_NUMBER = 9090
+DEFAULT_PORT = 9090
+DEFAULT_IP = "127.0.0.1"
+
+
+class Client:
+    def __init__(self, server_ip: str, port_number: int) -> None:
+        sock = socket.socket()
+        sock.setblocking(1)
+        sock.connect((server_ip, port_number))
+        self.sock = sock
+        # Работа с данными, поступающими от пользователя
+        self.user_processing()
+        # Закрываем сокет
+        self.sock.close()
+
+    def user_processing(self):
+        while True:
+            msg = input("-> ")
+            # Если сообщение exit
+            if msg == "exit": break
+            # Если ничего не ввели
+            if msg == "": msg = "None"
+
+            # Отправляем сообщение
+            self.sock.send(msg.encode())
+            # Получаем ответ
+            data = self.sock.recv(1024)
+            print(f"Ответ от сервера: {data.decode()}")
 
 
 def main():
-    sock = socket.socket()
-    sock.setblocking(1)
-    sock.connect((SERVER_IP, PORT_NUMBER))
+    port_input = input("Введите номер порта сервера -> ")
+    port_flag = port_validation(port_input)
+    # Если некорректный ввод
+    if not port_flag:
+        port_input = DEFAULT_PORT
+        print(f"Выставили порт {port_input} по умолчанию")
 
-    # 2. Модифицируйте код клиента таким образом, чтобы он читал строки в цикле до тех пор, пока клиент не введет “exit”
+    ip_input = input("Введите ip-адрес сервера -> ")
+    ip_flag = ip_validation(ip_input)
+    # Если некорректный ввод
+    if not ip_flag:
+        ip_input = DEFAULT_IP
+        print(f"Выставили ip-адрес {ip_input} по умолчанию")
 
-    while True:
-        msg = input("-> ")
-        # Если сообщение exit
-        if msg == "exit": break
-        # Если ничего не ввели
-        if msg == "": msg = "None"
-
-        # Отправляем сообщение
-        sock.send(msg.encode())
-        # Получаем ответ
-        data = sock.recv(1024)
-
-        print(f"Ответ от сервера: {data.decode()}")
-
-    sock.close()
+    client = Client(ip_input, int(port_input))
 
 
 if __name__ == "__main__":
